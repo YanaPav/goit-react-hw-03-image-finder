@@ -4,7 +4,6 @@ import { fetchImages } from './api';
 import css from './App.module.css';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
 import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modsl';
@@ -15,6 +14,7 @@ export class App extends Component {
     query: '',
     images: [],
     isLoading: false,
+    showLoadMoreBtn: false,
     isModalOpen: false,
     modalInfo: {
       url: '',
@@ -31,7 +31,9 @@ export class App extends Component {
         images: [],
         page: 1,
         error: null,
+        showLoadMoreBtn: false,
       });
+
       this.getImages();
     }
 
@@ -49,11 +51,23 @@ export class App extends Component {
 
     try {
       const newImages = await fetchImages(query, page);
-      console.log(newImages);
 
-      if (newImages.length < 1) {
+      if (newImages.length === 12) {
+        this.setState({
+          showLoadMoreBtn: true,
+        });
+      }
+
+      if (newImages.length < 12) {
+        this.setState({
+          showLoadMoreBtn: false,
+        });
+      }
+
+      if (newImages.length === 0) {
         throw new Error(`There is no results for ${query} :( Try again`);
       }
+
       this.setState(prevState => ({
         images: [...prevState.images, ...newImages],
       }));
@@ -104,7 +118,14 @@ export class App extends Component {
   };
 
   render() {
-    const { images, isLoading, isModalOpen, modalInfo, error } = this.state;
+    const {
+      images,
+      isLoading,
+      isModalOpen,
+      modalInfo,
+      error,
+      showLoadMoreBtn,
+    } = this.state;
 
     return (
       <div className={css.app}>
@@ -123,22 +144,10 @@ export class App extends Component {
         )}
 
         {images.length > 0 && (
-          <ImageGallery>
-            {images.map(({ webformatURL, largeImageURL, id, tags }) => {
-              return (
-                <ImageGalleryItem
-                  key={id}
-                  smallImgUrl={webformatURL}
-                  tags={tags}
-                  onClick={() => this.openModal(largeImageURL, tags)}
-                  largeImageURL={largeImageURL}
-                />
-              );
-            })}
-          </ImageGallery>
+          <ImageGallery images={images} openModal={this.openModal} />
         )}
 
-        {images.length >= 12 && <Button onClick={this.onLoadMoreClick} />}
+        {showLoadMoreBtn && <Button onClick={this.onLoadMoreClick} />}
       </div>
     );
   }

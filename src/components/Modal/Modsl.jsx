@@ -15,11 +15,11 @@ export class Modal extends Component {
   }
 
   render() {
-    const { closeModal, imageURL, tags } = this.props;
+    const { closeModal, imageURL, alt } = this.props;
     return createPortal(
       <div className={css.overlay} onClick={closeModal}>
         <div className={css.modal}>
-          <img src={imageURL} alt={tags} />
+          <img src={imageURL} alt={alt} />
         </div>
       </div>,
       modalRoot
@@ -30,5 +30,5 @@ export class Modal extends Component {
 Modal.propTypes = {
   closeModal: PropTypes.func.isRequired,
   imageURL: PropTypes.string.isRequired,
-  tags: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
 };
