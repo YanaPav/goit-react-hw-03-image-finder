@@ -13,8 +13,8 @@ export class App extends Component {
     page: 1,
     query: '',
     images: [],
+    totalImages: 0,
     isLoading: false,
-    showLoadMoreBtn: false,
     isModalOpen: false,
     modalInfo: {
       url: '',
@@ -26,18 +26,7 @@ export class App extends Component {
   componentDidUpdate(_, prevState) {
     const { query, page } = this.state;
 
-    if (query !== prevState.query) {
-      this.setState({
-        images: [],
-        page: 1,
-        error: null,
-        showLoadMoreBtn: false,
-      });
-
-      this.getImages();
-    }
-
-    if (page !== prevState.page) {
+    if (page !== prevState.page || query !== prevState.query) {
       this.getImages();
     }
   }
@@ -50,19 +39,7 @@ export class App extends Component {
     });
 
     try {
-      const newImages = await fetchImages(query, page);
-
-      if (newImages.length === 12) {
-        this.setState({
-          showLoadMoreBtn: true,
-        });
-      }
-
-      if (newImages.length < 12) {
-        this.setState({
-          showLoadMoreBtn: false,
-        });
-      }
+      const { newImages, totalImages } = await fetchImages(query, page);
 
       if (newImages.length === 0) {
         throw new Error(`There is no results for ${query} :( Try again`);
@@ -70,6 +47,7 @@ export class App extends Component {
 
       this.setState(prevState => ({
         images: [...prevState.images, ...newImages],
+        totalImages,
       }));
     } catch (error) {
       this.setState({
@@ -84,9 +62,19 @@ export class App extends Component {
 
   onFormSubmit = e => {
     e.preventDefault();
-    this.setState({
-      query: e.target.elements.searchQuery.value,
-    });
+    const { query } = this.state;
+    const newQuery = e.target.elements.searchQuery.value;
+
+    if (query !== newQuery) {
+      this.setState({
+        images: [],
+        page: 1,
+        error: null,
+        showLoadMoreBtn: false,
+        totalImages: 0,
+        query: newQuery,
+      });
+    }
   };
 
   onLoadMoreClick = () => {
@@ -118,14 +106,8 @@ export class App extends Component {
   };
 
   render() {
-    const {
-      images,
-      isLoading,
-      isModalOpen,
-      modalInfo,
-      error,
-      showLoadMoreBtn,
-    } = this.state;
+    const { images, isLoading, isModalOpen, modalInfo, error, totalImages } =
+      this.state;
 
     return (
       <div className={css.app}>
@@ -147,7 +129,9 @@ export class App extends Component {
           <ImageGallery images={images} openModal={this.openModal} />
         )}
 
-        {showLoadMoreBtn && <Button onClick={this.onLoadMoreClick} />}
+        {images.length < totalImages && images.length > 0 && (
+          <Button onClick={this.onLoadMoreClick} />
+        )}
       </div>
     );
   }
